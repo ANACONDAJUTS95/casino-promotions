@@ -3,15 +3,23 @@
 import { useState, useEffect } from "react";
 import { FaGear, FaLocationDot } from "react-icons/fa6";
 import { IoMdRefresh } from "react-icons/io";
-import { IoSearchSharp } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
-import CasinoDataTable from "@/components/CasinoDataTable";
-import ModelSelector from "@/components/ModelSelector";
+import { CasinoDataTable } from "@/components/CasinoDataTable";
+import { ModelSelector } from "@/components/ModelSelector";
+import { SettingsModal } from "@/components/modals/SettingsModal";
 
 export default function Home() {
   const [searchStarted, setSearchStarted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(90);
   const [selectedModel, setSelectedModel] = useState("Gemini 2.5 Pro");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [scheduleRun, setScheduleRun] = useState(true);
+  const [activeStates, setActiveStates] = useState({
+    newJersey: true,
+    michigan: true,
+    pennsylvania: true,
+    westVirginia: true,
+  });
 
   const handleRunSearch = () => {
     setSearchStarted(true);
@@ -21,6 +29,16 @@ export default function Home() {
     setTimeLeft(90);
     // TODO: Add actual data refresh logic here when real-time data is available
     console.log("Refreshing data...");
+  };
+
+  const handleStateChange = (
+    state: keyof typeof activeStates,
+    enabled: boolean
+  ) => {
+    setActiveStates((prev) => ({
+      ...prev,
+      [state]: enabled,
+    }));
   };
 
   // Countdown timer effect
@@ -53,7 +71,10 @@ export default function Home() {
           <FaLocationDot className="text-gray-100 text-xl" />
           <h1 className="text-gray-100">Location</h1>
         </div>
-        <div className="bg-black rounded-md p-2.5 cursor-pointer hover:bg-gray-800 transition-colors">
+        <div
+          onClick={() => setIsSettingsOpen(true)}
+          className="bg-black rounded-md p-2.5 cursor-pointer hover:bg-gray-800 transition-colors"
+        >
           <FaGear className="text-gray-100 text-xl" />
         </div>
       </motion.div>
@@ -134,16 +155,15 @@ export default function Home() {
             >
               <div className="flex flex-row gap-6 items-center">
                 <div className="flex flex-row gap-2 items-center">
-                  <IoSearchSharp className="text-gray-600" />
-                  <span className="text-gray-700">Search Results</span>
+                  <span className="text-black text-xl font-bold">Search Results</span>
                 </div>
                 <button 
                   onClick={handleRefresh}
-                  className="flex flex-row gap-2 items-center bg-black text-white rounded-md py-2 px-4 hover:bg-gray-800 transition-colors"
+                  className="flex flex-row gap-2 items-center bg-black rounded-md py-2 px-4 hover:bg-gray-800 transition-colors"
                 >
                   <IoMdRefresh className="text-white" />
-                  <span>Refresh</span>
-                  <span className="bg-gray-700 text-xs px-2 py-0.5 rounded min-w-[32px] text-center">
+                  <span className="text-white">Refresh</span>
+                  <span className="text-white/50 text-sm py-0.5 rounded min-w-[3rem] text-center">
                     {timeLeft}s
                   </span>
                 </button>
@@ -157,10 +177,20 @@ export default function Home() {
             </motion.div>
 
             {/* Results Table */}
-            <CasinoDataTable />
+            <CasinoDataTable activeStates={activeStates} />
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        scheduleRun={scheduleRun}
+        onScheduleRunChange={setScheduleRun}
+        activeStates={activeStates}
+        onStateChange={handleStateChange}
+      />
     </div>
   );
 }

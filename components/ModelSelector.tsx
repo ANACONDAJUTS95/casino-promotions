@@ -13,7 +13,7 @@ interface ModelSelectorProps {
 
 const models = ["Gemini 2.5 Pro", "Claude 4.5 Sonnet"];
 
-export default function ModelSelector({
+export function ModelSelector({
   selectedModel,
   onModelChange,
   variant = "dark",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { casinoOffers, type CasinoOffer } from "@/lib/data/casino-offers";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
@@ -15,14 +15,33 @@ const getComparisonStatus = (bonus: number): string => {
 
 const ITEMS_PER_PAGE = 10;
 
-export default function CasinoDataTable() {
+interface CasinoDataTableProps {
+  activeStates: {
+    newJersey: boolean;
+    michigan: boolean;
+    pennsylvania: boolean;
+    westVirginia: boolean;
+  };
+}
+
+export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Filter offers based on active states
+  const filteredOffers = casinoOffers.filter((offer) => {
+    const stateName = offer.state.Name;
+    if (stateName === "New Jersey") return activeStates.newJersey;
+    if (stateName === "Michigan") return activeStates.michigan;
+    if (stateName === "Pennsylvania") return activeStates.pennsylvania;
+    if (stateName === "West Virginia") return activeStates.westVirginia;
+    return false;
+  });
+
   // Calculate pagination
-  const totalPages = Math.ceil(casinoOffers.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredOffers.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentOffers = casinoOffers.slice(startIndex, endIndex);
+  const currentOffers = filteredOffers.slice(startIndex, endIndex);
 
   const goToNextPage = () => {
     if (currentPage < totalPages) {
@@ -39,6 +58,11 @@ export default function CasinoDataTable() {
   const goToPage = (page: number) => {
     setCurrentPage(page);
   };
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeStates]);
 
   // Generate page numbers to display
   const getPageNumbers = () => {
@@ -166,8 +190,8 @@ export default function CasinoDataTable() {
         transition={{ delay: 0.8, duration: 0.5 }}
       >
         <div className="text-sm text-gray-600">
-          Showing {startIndex + 1} to {Math.min(endIndex, casinoOffers.length)}{" "}
-          of {casinoOffers.length} results
+          Showing {startIndex + 1} to {Math.min(endIndex, filteredOffers.length)}{" "}
+          of {filteredOffers.length} results
         </div>
 
         <div className="flex flex-row gap-2 items-center">
