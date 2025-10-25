@@ -8,8 +8,13 @@ import { CasinoDataTable } from "@/components/CasinoDataTable";
 import { ModelSelector } from "@/components/ModelSelector";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 import { InsightsDashboard } from "@/components/InsightsDashboard";
-import { analyzeCoverage } from "@/lib/utils/gap-analysis";
+import { AIResearchPanel } from "@/components/ai/AIResearchPanel";
+import { AIRecommendationsPanel } from "@/components/ai/AIRecommendationsPanel";
+import { analyzeCoverage, findCrossCoverageGaps } from "@/lib/utils/gap-analysis";
 import { casinoOffers } from "@/lib/data/casino-offers";
+import { isGeminiConfigured } from "@/lib/ai/gemini-service";
+import { FiAlertCircle } from "react-icons/fi";
+import { HiSparkles } from "react-icons/hi2";
 
 export default function Home() {
   const [searchStarted, setSearchStarted] = useState(false);
@@ -18,6 +23,7 @@ export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [scheduleRun, setScheduleRun] = useState(true);
   const [showInsights, setShowInsights] = useState(false);
+  const [showAIResearch, setShowAIResearch] = useState(false);
   const [activeStates, setActiveStates] = useState({
     newJersey: true,
     michigan: true,
@@ -35,6 +41,25 @@ export default function Home() {
     return false;
   });
   const coverageStats = analyzeCoverage(filteredOffers);
+
+  // AI Research state
+  const [aiEnabled] = useState(isGeminiConfigured());
+  const [selectedState, setSelectedState] = useState<string>("");
+  
+  // Get missing casinos from cross-coverage analysis for AI research
+  const crossGaps = findCrossCoverageGaps(casinoOffers);
+  const missingCasinosByState: Record<string, string[]> = {};
+  
+  crossGaps.forEach((gap) => {
+    gap.missingIn.forEach((state) => {
+      if (!missingCasinosByState[state]) {
+        missingCasinosByState[state] = [];
+      }
+      missingCasinosByState[state].push(gap.casino);
+    });
+  });
+
+  const states = Object.keys(coverageStats.stateDistribution);
 
   const handleRunSearch = () => {
     setSearchStarted(true);
@@ -82,10 +107,12 @@ export default function Home() {
         initial={{ opacity: 1 }}
         animate={{ opacity: 1 }}
       >
-        <div className="flex flex-row gap-2 items-center bg-black rounded-md py-2 px-4 cursor-pointer hover:bg-gray-800 transition-colors">
+        {/* FUTURE FEATURE: NEAREST CASINO */}
+
+        {/* <div className="flex flex-row gap-2 items-center bg-black rounded-md py-2 px-4 cursor-pointer hover:bg-gray-800 transition-colors">
           <FaLocationDot className="text-gray-100 text-xl" />
           <h1 className="text-gray-100">Location</h1>
-        </div>
+        </div> */}
         <div
           onClick={() => setIsSettingsOpen(true)}
           className="bg-black rounded-md p-2.5 cursor-pointer hover:bg-gray-800 transition-colors"
@@ -120,7 +147,7 @@ export default function Home() {
             </motion.h2>
 
             <motion.div
-              className="mt-6 flex flex-row w-1/4 px-4 items-center justify-between"
+              className="mt-6 flex flex-row w-1/4 px-4 items-center justify-center"
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.5 }}
             >
@@ -130,11 +157,12 @@ export default function Home() {
               >
                 Run Search
               </button>
-              <ModelSelector
+              {/* FUTURE FEATURE: MODEL SELECTOR FOR AI MODELS */}
+              {/* <ModelSelector
                 selectedModel={selectedModel}
                 onModelChange={setSelectedModel}
                 variant="dark"
-              />
+              /> */}
             </motion.div>
           </motion.div>
         ) : (
@@ -189,7 +217,10 @@ export default function Home() {
                     </span>
                   </button>
                   <button 
-                    onClick={() => setShowInsights(!showInsights)}
+                    onClick={() => {
+                      setShowInsights(!showInsights);
+                      if (!showInsights) setShowAIResearch(false);
+                    }}
                     className={`flex flex-row gap-2 items-center rounded-md py-2 px-4 transition-colors ${
                       showInsights 
                         ? "bg-blue-600 text-white hover:bg-blue-700" 
@@ -200,21 +231,135 @@ export default function Home() {
                       {showInsights ? "Hide" : "Show"} Insights
                     </span>
                   </button>
+                  <button 
+                    onClick={() => {
+                      setShowAIResearch(!showAIResearch);
+                      if (!showAIResearch) setShowInsights(false);
+                    }}
+                    className={`flex flex-row gap-2 items-center rounded-md py-2 px-4 transition-colors ${
+                      showAIResearch 
+                        ? "bg-purple-600 text-white hover:bg-purple-700" 
+                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <HiSparkles className="text-lg" />
+                    <span className="text-sm font-medium">
+                      {showAIResearch ? "Hide" : "Show"} AI Research
+                    </span>
+                  </button>
                 </div>
               </div>
 
-              <ModelSelector
+              {/* FUTURE FEATURE: MODEL SELECTOR FOR AI MODELS */}
+              {/* <ModelSelector
                 selectedModel={selectedModel}
                 onModelChange={setSelectedModel}
                 variant="light"
-              />
+              /> */}
             </motion.div>
 
-            {/* Insights Dashboard */}
+            {/* Insights Dashboard - Algorithm-based analysis */}
             <InsightsDashboard 
               stats={coverageStats} 
               isVisible={showInsights}
             />
+
+            {/* AI Research Panel - AI-powered features */}
+            {showAIResearch && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="mb-6"
+              >
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <HiSparkles className="text-purple-600 text-2xl" />
+                    <h2 className="text-xl font-bold text-gray-900">AI-Powered Research</h2>
+                    <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
+                      Gemini 2.0 Flash
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-6">
+                    Use AI to discover new casino offers, analyze offer quality, and generate strategic recommendations. 
+                    Powered by Google Gemini with automatic retry logic for reliability.
+                  </p>
+
+                  {aiEnabled ? (
+                    <div className="space-y-6">
+                      {/* State Selector */}
+                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-purple-200 rounded-lg p-4">
+                        <label className="text-sm font-semibold text-gray-900 mb-3 block">
+                          📍 Select State for AI Research:
+                        </label>
+                        <div className="flex gap-2 flex-wrap">
+                          {states.map((state) => (
+                            <button
+                              key={state}
+                              onClick={() => setSelectedState(state)}
+                              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                selectedState === state
+                                  ? "bg-purple-600 text-white"
+                                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+                              }`}
+                            >
+                              {state}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* AI Research Panel */}
+                      {selectedState && (
+                        <AIResearchPanel
+                          state={selectedState}
+                          missingCasinos={missingCasinosByState[selectedState] || []}
+                        />
+                      )}
+
+                      {/* AI Recommendations */}
+                      <AIRecommendationsPanel
+                        gaps={coverageStats.gaps}
+                        stats={{
+                          totalOffers: coverageStats.totalOffers,
+                          stateCount: states.length,
+                          casinoCount: Object.keys(coverageStats.casinoDistribution).length,
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    /* API Key Setup Instructions */
+                    <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6">
+                      <div className="flex items-start gap-3">
+                        <FiAlertCircle className="text-yellow-600 text-2xl flex-shrink-0 mt-0.5" />
+                        <div>
+                          <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+                            AI Features Not Configured
+                          </h3>
+                          <p className="text-sm text-yellow-800 mb-3">
+                            To enable AI-powered offer discovery and analysis, you need to add a Gemini API key.
+                          </p>
+                          <div className="bg-white rounded border border-yellow-200 p-3">
+                            <p className="text-xs font-semibold text-gray-700 mb-2">Quick Setup (3 minutes):</p>
+                            <ol className="text-xs text-gray-700 space-y-1 list-decimal list-inside">
+                              <li>Get a free API key at: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-semibold">https://aistudio.google.com/app/apikey</a></li>
+                              <li>Create a <code className="bg-gray-100 px-1 rounded">.env.local</code> file in your project root</li>
+                              <li>Add: <code className="bg-gray-100 px-1 rounded">NEXT_PUBLIC_GEMINI_API_KEY=your_key_here</code></li>
+                              <li>Restart your dev server: <code className="bg-gray-100 px-1 rounded">npm run dev</code></li>
+                            </ol>
+                          </div>
+                          <div className="mt-3 bg-blue-50 border border-blue-200 rounded p-2">
+                            <p className="text-xs text-blue-800">
+                              💡 <strong>Free tier includes:</strong> 1,500 requests/day • ~$6/month for heavy usage
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
 
             {/* Results Table */}
             <CasinoDataTable activeStates={activeStates} />

@@ -192,7 +192,7 @@ export function SettingsModal({
                 {/* Footer */}
                 <div className="mt-8 pt-6 border-t border-gray-200">
                   <p className="text-xs text-center text-gray-400">
-                    Powered by: Gemini and Claude AI
+                    Powered by: Google Gemini
                   </p>
                 </div>
               </Dialog.Panel>

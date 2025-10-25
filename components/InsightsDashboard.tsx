@@ -49,7 +49,13 @@ export function InsightsDashboard({ stats, isVisible }: InsightsDashboardProps) 
         <div className="flex items-center gap-2 mb-4">
           <FiTrendingUp className="text-black text-2xl" />
           <h2 className="text-xl font-bold text-black">Coverage Insights & Gaps</h2>
+          <span className="bg-gray-100 text-gray-700 text-xs font-semibold px-2 py-1 rounded-full">
+            Algorithm-Based
+          </span>
         </div>
+        <p className="text-sm text-gray-600 mb-4">
+          Algorithmic analysis of your current casino offer coverage, identifying gaps and opportunities based on data patterns.
+        </p>
 
         {/* Summary Stats */}
         <div className="grid grid-cols-4 gap-4 mb-6">

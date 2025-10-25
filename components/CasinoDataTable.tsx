@@ -14,6 +14,8 @@ import {
   type ScoredOffer,
   type SortOption,
 } from "@/lib/utils/offer-prioritization";
+import { AIOfferAnalyzer } from "@/components/ai/AIOfferAnalyzer";
+import { isGeminiConfigured } from "@/lib/ai/gemini-service";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -30,6 +32,7 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<SortOption>("priority");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [aiEnabled] = useState(isGeminiConfigured());
 
   // Filter offers based on active states
   const filteredOffers = casinoOffers.filter((offer) => {
@@ -317,6 +320,18 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
                                 </div>
                               </div>
                             </div>
+
+                            {/* AI Deep Analysis */}
+                            {aiEnabled && (
+                              <div>
+                                <AIOfferAnalyzer
+                                  offerName={offer.Offer_Name}
+                                  casino={offer.Name}
+                                  deposit={offer.Expected_Deposit}
+                                  bonus={offer.Expected_Bonus}
+                                />
+                              </div>
+                            )}
                           </div>
                         </td>
                       </motion.tr>
