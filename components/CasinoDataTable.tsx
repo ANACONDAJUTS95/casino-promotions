@@ -346,7 +346,7 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
 
       {/* Pagination Controls */}
       <motion.div
-        className="flex flex-row items-center justify-between px-4"
+        className="flex flex-row items-center justify-between px-4 mb-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.5 }}
