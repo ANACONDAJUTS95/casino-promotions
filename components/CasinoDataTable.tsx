@@ -1,17 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { casinoOffers, type CasinoOffer } from "@/lib/data/casino-offers";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+import { FaChevronLeft, FaChevronRight, FaSort } from "react-icons/fa6";
 import { AiOutlineRise, AiOutlineFall } from "react-icons/ai";
-
-// Helper function to determine comparison status based on bonus amount
-const getComparisonStatus = (bonus: number): string => {
-  if (bonus >= 1000) return "Better";
-  if (bonus >= 500) return "New";
-  return "Worse";
-};
+import { HiSparkles } from "react-icons/hi2";
+import {
+  prioritizeOffers,
+  sortOffers,
+  getPriorityTier,
+  getPriorityBadge,
+  type ScoredOffer,
+  type SortOption,
+} from "@/lib/utils/offer-prioritization";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -26,6 +28,8 @@ interface CasinoDataTableProps {
 
 export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState<SortOption>("priority");
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   // Filter offers based on active states
   const filteredOffers = casinoOffers.filter((offer) => {
@@ -37,11 +41,15 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
     return false;
   });
 
+  // Prioritize and sort offers
+  const scoredOffers = prioritizeOffers(filteredOffers);
+  const sortedOffers = sortOffers(scoredOffers, sortBy);
+
   // Calculate pagination
-  const totalPages = Math.ceil(filteredOffers.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedOffers.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentOffers = filteredOffers.slice(startIndex, endIndex);
+  const currentOffers = sortedOffers.slice(startIndex, endIndex);
 
   const goToNextPage = () => {
     if (currentPage < totalPages) {
@@ -59,10 +67,14 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
     setCurrentPage(page);
   };
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters or sort changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeStates]);
+  }, [activeStates, sortBy]);
+
+  const toggleRowExpansion = (offerId: string) => {
+    setExpandedRow(expandedRow === offerId ? null : offerId);
+  };
 
   // Generate page numbers to display
   const getPageNumbers = () => {
@@ -103,6 +115,39 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
 
   return (
     <div className="space-y-4">
+      {/* Sort Controls */}
+      <motion.div
+        className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-3"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+      >
+        <div className="flex items-center gap-2">
+          <FaSort className="text-gray-600" />
+          <span className="text-sm font-medium text-gray-700">Sort by:</span>
+        </div>
+        <div className="flex gap-2">
+          {[
+            { value: "priority" as SortOption, label: "Priority Score" },
+            { value: "bonus-high" as SortOption, label: "Highest Bonus" },
+            { value: "value-ratio" as SortOption, label: "Best Value" },
+            { value: "state" as SortOption, label: "State" },
+          ].map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setSortBy(option.value)}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                sortBy === option.value
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+
       {/* Table */}
       <motion.div
         className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
@@ -114,67 +159,169 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
+                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 w-[100px]">
+                  Priority
+                </th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
                   State
                 </th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
-                  Casino Name
+                  Casino
                 </th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
-                  Status
+                  Offer
                 </th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
-                  Offer Found
+                <th className="text-center py-4 px-6 text-sm font-semibold text-gray-700">
+                  Bonus
                 </th>
-                <th className="text-center py-4 px-6 text-sm font-semibold text-gray-700 w-[150px]">
-                  Comparison
+                <th className="text-center py-4 px-6 text-sm font-semibold text-gray-700">
+                  Value
                 </th>
               </tr>
             </thead>
             <tbody>
               {currentOffers.map((offer, index) => {
-                const comparison = getComparisonStatus(offer.Expected_Bonus);
+                const tier = getPriorityTier(offer.priorityScore);
+                const badge = getPriorityBadge(tier);
+                const isExpanded = expandedRow === offer.id;
+
                 return (
-                  <motion.tr
-                    key={offer.id}
-                    className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{
-                      delay: 0.6 + index * 0.05,
-                      duration: 0.4,
-                    }}
-                  >
-                    <td className="py-4 px-6 text-sm text-gray-700">
-                      {offer.state.Name}
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-700">
-                      {offer.Name}
-                    </td>
-                    <td className="py-4 px-6 text-sm">
-                      <span className="text-gray-700">{offer.offer_type}</span>
-                    </td>
-                    <td className="py-4 px-6 text-sm text-gray-700">
-                      {offer.Offer_Name}
-                    </td>
-                    <td className="py-4 px-6 text-sm">
-                      <div className="flex items-center justify-center">
-                        {comparison === "Better" ? (
-                          <div className="flex items-center gap-1 text-green-600 min-w-[90px] justify-center">
-                            <AiOutlineRise className="text-lg" />
-                            <span className="font-medium">Better</span>
+                  <React.Fragment key={offer.id}>
+                    <motion.tr
+                      className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => toggleRowExpansion(offer.id)}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{
+                        delay: 0.6 + index * 0.05,
+                        duration: 0.4,
+                      }}
+                    >
+                      <td className="py-4 px-6 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold text-gray-900">
+                            {offer.priorityScore}
+                          </span>
+                          <span className="text-xs">{badge.icon}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-sm">
+                        <span className="font-medium text-gray-900">
+                          {offer.state.Abbreviation}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6 text-sm">
+                        <div>
+                          <div className="font-medium text-gray-900">{offer.Name}</div>
+                          <div className="text-xs text-gray-500">{offer.offer_type}</div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-sm text-gray-700">
+                        <div className="max-w-md">
+                          {offer.Offer_Name.length > 80
+                            ? offer.Offer_Name.substring(0, 80) + "..."
+                            : offer.Offer_Name}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-sm text-center">
+                        <div className="font-bold text-gray-900">
+                          ${offer.Expected_Bonus.toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          on ${offer.Expected_Deposit.toLocaleString()}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-sm text-center">
+                        <div
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full border ${
+                            offer.valueRatio >= 2
+                              ? "bg-green-50 border-green-200 text-green-700"
+                              : offer.valueRatio >= 1
+                              ? "bg-blue-50 border-blue-200 text-blue-700"
+                              : "bg-gray-50 border-gray-200 text-gray-700"
+                          }`}
+                        >
+                          {offer.valueRatio >= 2 && <HiSparkles className="text-xs" />}
+                          <span className="font-semibold">
+                            {(offer.valueRatio * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      </td>
+                    </motion.tr>
+
+                    {/* Expanded Row with Details */}
+                    {isExpanded && (
+                      <motion.tr
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <td colSpan={6} className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                          <div className="space-y-3">
+                            {/* Full Offer Name */}
+                            <div>
+                              <div className="text-xs font-semibold text-gray-500 mb-1">
+                                FULL OFFER
+                              </div>
+                              <div className="text-sm text-gray-900">{offer.Offer_Name}</div>
+                            </div>
+
+                            {/* Insights */}
+                            {offer.insights.length > 0 && (
+                              <div>
+                                <div className="text-xs font-semibold text-gray-500 mb-2">
+                                  AI INSIGHTS
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {offer.insights.map((insight, i) => (
+                                    <span
+                                      key={i}
+                                      className="text-xs bg-white border border-gray-200 rounded-full px-3 py-1 text-gray-700"
+                                    >
+                                      {insight}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Score Breakdown */}
+                            <div>
+                              <div className="text-xs font-semibold text-gray-500 mb-2">
+                                SCORE BREAKDOWN
+                              </div>
+                              <div className="grid grid-cols-4 gap-3">
+                                <div className="bg-white border border-gray-200 rounded-lg p-2">
+                                  <div className="text-xs text-gray-500">Value Ratio</div>
+                                  <div className="text-lg font-bold text-gray-900">
+                                    {offer.scoreBreakdown.valueRatioScore}
+                                  </div>
+                                </div>
+                                <div className="bg-white border border-gray-200 rounded-lg p-2">
+                                  <div className="text-xs text-gray-500">Bonus Amount</div>
+                                  <div className="text-lg font-bold text-gray-900">
+                                    {offer.scoreBreakdown.bonusAmountScore}
+                                  </div>
+                                </div>
+                                <div className="bg-white border border-gray-200 rounded-lg p-2">
+                                  <div className="text-xs text-gray-500">Offer Type</div>
+                                  <div className="text-lg font-bold text-gray-900">
+                                    {offer.scoreBreakdown.offerTypeScore}
+                                  </div>
+                                </div>
+                                <div className="bg-white border border-gray-200 rounded-lg p-2">
+                                  <div className="text-xs text-gray-500">Accessibility</div>
+                                  <div className="text-lg font-bold text-gray-900">
+                                    {offer.scoreBreakdown.accessibilityScore}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                        ) : comparison === "Worse" ? (
-                          <div className="flex items-center gap-1 text-red-600 min-w-[90px] justify-center">
-                            <AiOutlineFall className="text-lg" />
-                            <span className="font-medium">Worse</span>
-                          </div>
-                        ) : (
-                          <span className="font-semibold text-blue-600 min-w-[90px] inline-block text-center">New</span>
-                        )}
-                      </div>
-                    </td>
-                  </motion.tr>
+                        </td>
+                      </motion.tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </tbody>
@@ -190,8 +337,8 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
         transition={{ delay: 0.8, duration: 0.5 }}
       >
         <div className="text-sm text-gray-600">
-          Showing {startIndex + 1} to {Math.min(endIndex, filteredOffers.length)}{" "}
-          of {filteredOffers.length} results
+          Showing {startIndex + 1} to {Math.min(endIndex, sortedOffers.length)}{" "}
+          of {sortedOffers.length} results
         </div>
 
         <div className="flex flex-row gap-2 items-center">

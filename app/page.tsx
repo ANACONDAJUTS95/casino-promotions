@@ -7,6 +7,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CasinoDataTable } from "@/components/CasinoDataTable";
 import { ModelSelector } from "@/components/ModelSelector";
 import { SettingsModal } from "@/components/modals/SettingsModal";
+import { InsightsDashboard } from "@/components/InsightsDashboard";
+import { analyzeCoverage } from "@/lib/utils/gap-analysis";
+import { casinoOffers } from "@/lib/data/casino-offers";
 
 export default function Home() {
   const [searchStarted, setSearchStarted] = useState(false);
@@ -14,12 +17,24 @@ export default function Home() {
   const [selectedModel, setSelectedModel] = useState("Gemini 2.5 Pro");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [scheduleRun, setScheduleRun] = useState(true);
+  const [showInsights, setShowInsights] = useState(false);
   const [activeStates, setActiveStates] = useState({
     newJersey: true,
     michigan: true,
     pennsylvania: true,
     westVirginia: true,
   });
+
+  // Calculate coverage statistics
+  const filteredOffers = casinoOffers.filter((offer) => {
+    const stateName = offer.state.Name;
+    if (stateName === "New Jersey") return activeStates.newJersey;
+    if (stateName === "Michigan") return activeStates.michigan;
+    if (stateName === "Pennsylvania") return activeStates.pennsylvania;
+    if (stateName === "West Virginia") return activeStates.westVirginia;
+    return false;
+  });
+  const coverageStats = analyzeCoverage(filteredOffers);
 
   const handleRunSearch = () => {
     setSearchStarted(true);
@@ -156,17 +171,36 @@ export default function Home() {
               <div className="flex flex-row gap-6 items-center">
                 <div className="flex flex-row gap-2 items-center">
                   <span className="text-black text-xl font-bold">Search Results</span>
+                  {coverageStats.gaps.length > 0 && (
+                    <span className="bg-red-100 text-red-600 text-xs font-semibold px-2 py-1 rounded-full">
+                      {coverageStats.gaps.length} gaps
+                    </span>
+                  )}
                 </div>
-                <button 
-                  onClick={handleRefresh}
-                  className="flex flex-row gap-2 items-center bg-black rounded-md py-2 px-4 hover:bg-gray-800 transition-colors"
-                >
-                  <IoMdRefresh className="text-white" />
-                  <span className="text-white">Refresh</span>
-                  <span className="text-white/50 text-sm py-0.5 rounded min-w-[3rem] text-center">
-                    {timeLeft}s
-                  </span>
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={handleRefresh}
+                    className="flex flex-row gap-2 items-center bg-black rounded-md py-2 px-4 hover:bg-gray-800 transition-colors"
+                  >
+                    <IoMdRefresh className="text-white" />
+                    <span className="text-white">Refresh</span>
+                    <span className="text-white/50 text-sm py-0.5 rounded min-w-[3rem] text-center">
+                      {timeLeft}s
+                    </span>
+                  </button>
+                  <button 
+                    onClick={() => setShowInsights(!showInsights)}
+                    className={`flex flex-row gap-2 items-center rounded-md py-2 px-4 transition-colors ${
+                      showInsights 
+                        ? "bg-blue-600 text-white hover:bg-blue-700" 
+                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="text-sm font-medium">
+                      {showInsights ? "Hide" : "Show"} Insights
+                    </span>
+                  </button>
+                </div>
               </div>
 
               <ModelSelector
@@ -175,6 +209,12 @@ export default function Home() {
                 variant="light"
               />
             </motion.div>
+
+            {/* Insights Dashboard */}
+            <InsightsDashboard 
+              stats={coverageStats} 
+              isVisible={showInsights}
+            />
 
             {/* Results Table */}
             <CasinoDataTable activeStates={activeStates} />
