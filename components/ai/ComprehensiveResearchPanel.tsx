@@ -57,18 +57,26 @@ export function ComprehensiveResearchPanel({
       // Phase 1: Discover all licensed casinos
       const casinos = await discoverLicensedCasinos(selectedState);
       setDiscoveredCasinos(casinos);
-      setProgress({ phase: "researching", processedCount: 0, totalCount: casinos.length });
+      
+      // RATE LIMIT PROTECTION: Limit to top 5 casinos to avoid hitting Gemini's 10 RPM limit
+      // TO CHANGE: Modify the number below (currently 5) to process more casinos
+      // Note: With 1 second delay between requests, 5 casinos = ~5 minutes of research
+      // Increasing beyond 5 may require increasing the delay to avoid rate limits
+      const maxCasinosToResearch = 5;
+      const casinosToResearch = casinos.slice(0, maxCasinosToResearch);
+      
+      setProgress({ phase: "researching", processedCount: 0, totalCount: casinosToResearch.length });
 
       // Phase 2: Research offers for each casino
       const allOffers: ResearchedOffer[] = [];
       
-      for (let i = 0; i < casinos.length; i++) {
-        const casino = casinos[i];
+      for (let i = 0; i < casinosToResearch.length; i++) {
+        const casino = casinosToResearch[i];
         setProgress({
           phase: "researching",
           currentCasino: casino.name,
           processedCount: i,
-          totalCount: casinos.length,
+          totalCount: casinosToResearch.length,
         });
 
         // Find existing offer in our system
@@ -99,15 +107,16 @@ export function ComprehensiveResearchPanel({
           // Continue with next casino even if one fails
         }
 
-        // Small delay to avoid rate limiting
+        // Small delay to avoid rate limiting (1 second between requests)
+        // TO CHANGE: Increase this delay if you process more casinos (e.g., 6000ms for 10 RPM limit)
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       setResearchResults(allOffers);
       setProgress({
         phase: "complete",
-        processedCount: casinos.length,
-        totalCount: casinos.length,
+        processedCount: casinosToResearch.length,
+        totalCount: casinosToResearch.length,
       });
     } catch (err) {
       setError(
@@ -153,6 +162,16 @@ export function ComprehensiveResearchPanel({
         AI-powered research to discover ALL licensed casinos in a state and identify
         better promotional offers using official regulatory sources.
       </p>
+
+      <div
+        className={`text-xs mb-4 px-3 py-2 rounded ${
+          darkMode
+            ? "bg-blue-900/20 border border-blue-800 text-blue-300"
+            : "bg-blue-50 border border-blue-200 text-blue-700"
+        }`}
+      >
+        ℹ️ <strong>Rate Limit Protection:</strong> Research limited to top 5 casinos to stay within free tier limits (10 requests/minute).
+      </div>
 
       {/* State Selection & Action */}
       <div className="flex items-center gap-3 mb-4">
