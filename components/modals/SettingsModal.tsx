@@ -9,6 +9,10 @@ interface SettingsModalProps {
   onClose: () => void;
   scheduleRun: boolean;
   onScheduleRunChange: (enabled: boolean) => void;
+  darkMode: boolean;
+  onDarkModeChange: (enabled: boolean) => void;
+  autoRefresh: boolean;
+  onAutoRefreshChange: (enabled: boolean) => void;
   activeStates: {
     newJersey: boolean;
     michigan: boolean;
@@ -23,6 +27,10 @@ export function SettingsModal({
   onClose,
   scheduleRun,
   onScheduleRunChange,
+  darkMode,
+  onDarkModeChange,
+  autoRefresh,
+  onAutoRefreshChange,
   activeStates,
   onStateChange,
 }: SettingsModalProps) {
@@ -60,31 +68,115 @@ export function SettingsModal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-8 shadow-xl transition-all">
+              <Dialog.Panel className={`w-full max-w-md transform overflow-hidden rounded-2xl p-8 shadow-xl transition-all ${
+                darkMode ? "bg-gray-800" : "bg-white"
+              }`}>
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-gray-200 pb-4 mb-6">
-                  <Dialog.Title className="text-2xl font-semibold text-gray-900">
+                <div className={`flex items-center justify-between pb-4 mb-6 ${
+                  darkMode ? "border-b border-gray-700" : "border-b border-gray-200"
+                }`}>
+                  <Dialog.Title className={`text-2xl font-semibold ${
+                    darkMode ? "text-white" : "text-gray-900"
+                  }`}>
                     Settings
                   </Dialog.Title>
                   <button
                     onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className={`transition-colors ${
+                      darkMode 
+                        ? "text-gray-400 hover:text-gray-300" 
+                        : "text-gray-400 hover:text-gray-600"
+                    }`}
                   >
                     <FaTimes className="text-xl" />
                   </button>
                 </div>
 
                 <div className="space-y-6">
-                  {/* Schedule Run Section */}
-                  <div className="space-y-3">
+                  {/* Page Settings Section */}
+                  <div className="space-y-4">
+                    <h3 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>
+                      Appearance & Behavior
+                    </h3>
+                    
+                    {/* DARK/LIGHT MODE SWITCH */}
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-medium text-gray-900">Schedule Run</h3>
+                      <div>
+                        <h4 className={`text-base font-medium ${darkMode ? "text-gray-200" : "text-gray-900"}`}>
+                          Dark Mode
+                        </h4>
+                        <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                          Toggle between light and dark theme
+                        </p>
+                      </div>
+                      <Switch
+                        checked={darkMode}
+                        onChange={onDarkModeChange}
+                        className={`${
+                          darkMode ? "bg-blue-600" : "bg-gray-300"
+                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                          darkMode ? "hover:bg-blue-700" : "hover:bg-gray-400"
+                        }`}
+                      >
+                        <span
+                          className={`${
+                            darkMode ? "translate-x-6" : "translate-x-1"
+                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                        />
+                      </Switch>
+                    </div>
+                    
+                    {/* AUTO-REFRESH TOGGLE */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className={`text-base font-medium ${darkMode ? "text-gray-200" : "text-gray-900"}`}>
+                          Auto-Refresh
+                        </h4>
+                        <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                          Automatically refresh table every 90 seconds
+                        </p>
+                      </div>
+                      <Switch
+                        checked={autoRefresh}
+                        onChange={onAutoRefreshChange}
+                        className={`${
+                          autoRefresh ? (darkMode ? "bg-blue-600" : "bg-black") : "bg-gray-300"
+                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                          autoRefresh 
+                            ? (darkMode ? "hover:bg-blue-700" : "hover:bg-gray-800") 
+                            : "hover:bg-gray-400"
+                        }`}
+                      >
+                        <span
+                          className={`${
+                            autoRefresh ? "translate-x-6" : "translate-x-1"
+                          } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                        />
+                      </Switch>
+                    </div>
+
+                    <div className={`h-px ${darkMode ? "bg-gray-700" : "bg-gray-200"}`} />
+                    
+                    {/* SCHEDULE RUN */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className={`text-base font-medium ${darkMode ? "text-gray-200" : "text-gray-900"}`}>
+                          Schedule Run
+                        </h4>
+                        <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                          Run research automatically every day at 9:00 AM EST
+                        </p>
+                      </div>
                       <Switch
                         checked={scheduleRun}
                         onChange={onScheduleRunChange}
                         className={`${
-                          scheduleRun ? "bg-black" : "bg-gray-300"
-                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none hover:bg-black/80`}
+                          scheduleRun ? (darkMode ? "bg-blue-600" : "bg-black") : "bg-gray-300"
+                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                          scheduleRun 
+                            ? (darkMode ? "hover:bg-blue-700" : "hover:bg-gray-800") 
+                            : "hover:bg-gray-400"
+                        }`}
                       >
                         <span
                           className={`${
@@ -94,11 +186,7 @@ export function SettingsModal({
                       </Switch>
                     </div>
                     
-                    <p className="text-sm text-gray-600">
-                      Run research automatically every day at 9:00 AM EST
-                    </p>
-                    
-                    <p className="text-xs text-gray-400">
+                    <p className={`text-xs ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
                       Last Updated: {getLastUpdatedText()}
                     </p>
                   </div>
@@ -106,8 +194,10 @@ export function SettingsModal({
                   {/* States Monitor Section */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-medium text-gray-900">States Monitor</h3>
-                      <span className="text-sm text-gray-500">
+                      <h3 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"}`}>
+                        States Monitor
+                      </h3>
+                      <span className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                         States Covered: {statesCovered}
                       </span>
                     </div>
@@ -116,13 +206,21 @@ export function SettingsModal({
                     <div className="space-y-3">
                       {/* New Jersey */}
                       <div className="flex items-center justify-between">
-                        <span className="text-base text-gray-900">New Jersey</span>
+                        <span className={`text-base ${darkMode ? "text-gray-200" : "text-gray-900"}`}>
+                          New Jersey
+                        </span>
                         <Switch
                           checked={activeStates.newJersey}
                           onChange={(enabled) => onStateChange("newJersey", enabled)}
                           className={`${
-                            activeStates.newJersey ? "bg-black" : "bg-gray-300"
-                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none hover:bg-black/80`}
+                            activeStates.newJersey 
+                              ? (darkMode ? "bg-blue-600" : "bg-black") 
+                              : "bg-gray-300"
+                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                            activeStates.newJersey 
+                              ? (darkMode ? "hover:bg-blue-700" : "hover:bg-gray-800") 
+                              : "hover:bg-gray-400"
+                          }`}
                         >
                           <span
                             className={`${
@@ -134,13 +232,21 @@ export function SettingsModal({
 
                       {/* Michigan */}
                       <div className="flex items-center justify-between">
-                        <span className="text-base text-gray-900">Michigan</span>
+                        <span className={`text-base ${darkMode ? "text-gray-200" : "text-gray-900"}`}>
+                          Michigan
+                        </span>
                         <Switch
                           checked={activeStates.michigan}
                           onChange={(enabled) => onStateChange("michigan", enabled)}
                           className={`${
-                            activeStates.michigan ? "bg-black" : "bg-gray-300"
-                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none hover:bg-black/80`}
+                            activeStates.michigan 
+                              ? (darkMode ? "bg-blue-600" : "bg-black") 
+                              : "bg-gray-300"
+                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                            activeStates.michigan 
+                              ? (darkMode ? "hover:bg-blue-700" : "hover:bg-gray-800") 
+                              : "hover:bg-gray-400"
+                          }`}
                         >
                           <span
                             className={`${
@@ -152,13 +258,21 @@ export function SettingsModal({
 
                       {/* Pennsylvania */}
                       <div className="flex items-center justify-between">
-                        <span className="text-base text-gray-900">Pennsylvania</span>
+                        <span className={`text-base ${darkMode ? "text-gray-200" : "text-gray-900"}`}>
+                          Pennsylvania
+                        </span>
                         <Switch
                           checked={activeStates.pennsylvania}
                           onChange={(enabled) => onStateChange("pennsylvania", enabled)}
                           className={`${
-                            activeStates.pennsylvania ? "bg-black" : "bg-gray-300"
-                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none hover:bg-black/80`}
+                            activeStates.pennsylvania 
+                              ? (darkMode ? "bg-blue-600" : "bg-black") 
+                              : "bg-gray-300"
+                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                            activeStates.pennsylvania 
+                              ? (darkMode ? "hover:bg-blue-700" : "hover:bg-gray-800") 
+                              : "hover:bg-gray-400"
+                          }`}
                         >
                           <span
                             className={`${
@@ -170,13 +284,21 @@ export function SettingsModal({
 
                       {/* West Virginia */}
                       <div className="flex items-center justify-between">
-                        <span className="text-base text-gray-900">West Virginia</span>
+                        <span className={`text-base ${darkMode ? "text-gray-200" : "text-gray-900"}`}>
+                          West Virginia
+                        </span>
                         <Switch
                           checked={activeStates.westVirginia}
                           onChange={(enabled) => onStateChange("westVirginia", enabled)}
                           className={`${
-                            activeStates.westVirginia ? "bg-black" : "bg-gray-300"
-                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none hover:bg-black/80`}
+                            activeStates.westVirginia 
+                              ? (darkMode ? "bg-blue-600" : "bg-black") 
+                              : "bg-gray-300"
+                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                            activeStates.westVirginia 
+                              ? (darkMode ? "hover:bg-blue-700" : "hover:bg-gray-800") 
+                              : "hover:bg-gray-400"
+                          }`}
                         >
                           <span
                             className={`${
@@ -190,8 +312,10 @@ export function SettingsModal({
                 </div>
 
                 {/* Footer */}
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                  <p className="text-xs text-center text-gray-400">
+                <div className={`mt-8 pt-6 ${
+                  darkMode ? "border-t border-gray-700" : "border-t border-gray-200"
+                }`}>
+                  <p className={`text-xs text-center ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
                     Powered by: Google Gemini
                   </p>
                 </div>

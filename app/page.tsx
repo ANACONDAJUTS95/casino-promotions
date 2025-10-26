@@ -24,6 +24,10 @@ export default function Home() {
   const [scheduleRun, setScheduleRun] = useState(true);
   const [showInsights, setShowInsights] = useState(false);
   const [showAIResearch, setShowAIResearch] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [darkMode, setDarkMode] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const [activeStates, setActiveStates] = useState({
     newJersey: true,
     michigan: true,
@@ -65,10 +69,19 @@ export default function Home() {
     setSearchStarted(true);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
     setTimeLeft(90);
-    // TODO: Add actual data refresh logic here when real-time data is available
-    console.log("Refreshing data...");
+    
+    // Simulate data refresh (in a real app, this would fetch from an API)
+    // This provides visual feedback and re-renders the table
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Increment key to force re-render of table component
+    setRefreshKey(prev => prev + 1);
+    
+    setIsRefreshing(false);
+    console.log("Data refreshed at:", new Date().toLocaleTimeString());
   };
 
   const handleStateChange = (
@@ -81,9 +94,14 @@ export default function Home() {
     }));
   };
 
+  // Set theme attribute on HTML element
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
+
   // Countdown timer effect
   useEffect(() => {
-    if (!searchStarted) return;
+    if (!searchStarted || !autoRefresh) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prevTime) => {
@@ -97,13 +115,15 @@ export default function Home() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [searchStarted]);
+  }, [searchStarted, autoRefresh]);
 
   return (
-    <div className="flex flex-col min-h-screen font-sans bg-gray-100">
-      {/* Fixed Header Controls */}
+    <div className={`relative flex flex-col min-h-screen font-sans transition-colors ${
+      darkMode ? "bg-gray-900" : "bg-gray-100"
+    }`}>
+      {/* Header Controls */}
       <motion.div
-        className="fixed flex flex-row gap-6 items-center justify-between top-10 right-10 z-10"
+        className="absolute flex flex-row gap-6 items-center justify-between top-10 right-10 z-10"
         initial={{ opacity: 1 }}
         animate={{ opacity: 1 }}
       >
@@ -115,7 +135,11 @@ export default function Home() {
         </div> */}
         <div
           onClick={() => setIsSettingsOpen(true)}
-          className="bg-black rounded-md p-2.5 cursor-pointer hover:bg-gray-800 transition-colors"
+          className={`rounded-md p-2.5 cursor-pointer transition-colors ${
+            darkMode 
+              ? "bg-gray-700 hover:bg-gray-600" 
+              : "bg-black hover:bg-gray-800"
+          }`}
         >
           <FaGear className="text-gray-100 text-xl" />
         </div>
@@ -132,14 +156,14 @@ export default function Home() {
             transition={{ duration: 0.6, ease: "easeInOut" }}
           >
             <motion.h1
-              className="text-4xl text-black font-bold"
+              className={`text-4xl font-bold ${darkMode ? "text-white" : "text-black"}`}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.5 }}
             >
               GAMBIT
             </motion.h1>
             <motion.h2
-              className="text-gray-500"
+              className={darkMode ? "text-gray-400" : "text-gray-500"}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.5 }}
             >
@@ -153,7 +177,11 @@ export default function Home() {
             >
               <button
                 onClick={handleRunSearch}
-                className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors"
+                className={`px-4 py-2 rounded-md transition-colors cursor-pointer ${
+                  darkMode
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-black text-white hover:bg-gray-800"
+                }`}
               >
                 Run Search
               </button>
@@ -181,10 +209,10 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
             >
-              <h1 className="text-3xl text-black font-bold">
+              <h1 className={`text-3xl font-bold ${darkMode ? "text-white" : "text-black"}`}>
                 GAMBIT
               </h1>
-              <p className="text-gray-500 text-sm mt-1">
+              <p className={`text-sm mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                 Gaming Analysis & Machine-Based Intelligence Tracker
               </p>
             </motion.div>
@@ -198,9 +226,15 @@ export default function Home() {
             >
               <div className="flex flex-row gap-6 items-center">
                 <div className="flex flex-row gap-2 items-center">
-                  <span className="text-black text-xl font-bold">Search Results</span>
+                  <span className={`text-xl font-bold ${darkMode ? "text-white" : "text-black"}`}>
+                    Search Results
+                  </span>
                   {coverageStats.gaps.length > 0 && (
-                    <span className="bg-red-100 text-red-600 text-xs font-semibold px-2 py-1 rounded-full">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                      darkMode 
+                        ? "bg-red-900/30 text-red-400" 
+                        : "bg-red-100 text-red-600"
+                    }`}>
                       {coverageStats.gaps.length} gaps
                     </span>
                   )}
@@ -208,23 +242,41 @@ export default function Home() {
                 <div className="flex gap-2">
                   <button 
                     onClick={handleRefresh}
-                    className="flex flex-row gap-2 items-center bg-black rounded-md py-2 px-4 hover:bg-gray-800 transition-colors"
+                    disabled={isRefreshing || !autoRefresh}
+                    className={`flex flex-row gap-2 items-center rounded-md py-2 px-4 transition-colors cursor-pointer ${
+                      darkMode
+                        ? "bg-blue-600 hover:bg-blue-700"
+                        : "bg-black hover:bg-gray-800"
+                    } ${
+                      isRefreshing || !autoRefresh
+                        ? "opacity-70 cursor-not-allowed" 
+                        : ""
+                    }`}
                   >
-                    <IoMdRefresh className="text-white" />
-                    <span className="text-white">Refresh</span>
-                    <span className="text-white/50 text-sm py-0.5 rounded min-w-[3rem] text-center">
-                      {timeLeft}s
+                    <IoMdRefresh className={`text-white ${isRefreshing ? "animate-spin" : ""}`} />
+                    <span className="text-white">
+                      {isRefreshing ? "Refreshing..." : "Refresh"}
                     </span>
+                    {!isRefreshing && autoRefresh && (
+                      <span className="text-white/50 text-sm py-0.5 rounded min-w-[3rem] text-center">
+                        {timeLeft}s
+                      </span>
+                    )}
+                    {!autoRefresh && (
+                      <span className="text-white/50 text-xs">(Auto-off)</span>
+                    )}
                   </button>
                   <button 
                     onClick={() => {
                       setShowInsights(!showInsights);
                       if (!showInsights) setShowAIResearch(false);
                     }}
-                    className={`flex flex-row gap-2 items-center rounded-md py-2 px-4 transition-colors ${
+                    className={`flex flex-row gap-2 items-center rounded-md py-2 px-4 transition-colors cursor-pointer ${
                       showInsights 
                         ? "bg-blue-600 text-white hover:bg-blue-700" 
-                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        : darkMode
+                          ? "bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700"
+                          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
                     <span className="text-sm font-medium">
@@ -236,10 +288,12 @@ export default function Home() {
                       setShowAIResearch(!showAIResearch);
                       if (!showAIResearch) setShowInsights(false);
                     }}
-                    className={`flex flex-row gap-2 items-center rounded-md py-2 px-4 transition-colors ${
+                    className={`flex flex-row gap-2 items-center rounded-md py-2 px-4 transition-colors cursor-pointer ${
                       showAIResearch 
                         ? "bg-purple-600 text-white hover:bg-purple-700" 
-                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        : darkMode
+                          ? "bg-gray-800 border border-gray-700 text-gray-300 hover:bg-gray-700"
+                          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
                     <HiSparkles className="text-lg" />
@@ -262,6 +316,7 @@ export default function Home() {
             <InsightsDashboard 
               stats={coverageStats} 
               isVisible={showInsights}
+              darkMode={darkMode}
             />
 
             {/* AI Research Panel - AI-powered features */}
@@ -272,15 +327,25 @@ export default function Home() {
                 exit={{ opacity: 0, y: -20 }}
                 className="mb-6"
               >
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className={`rounded-lg shadow-sm p-6 ${
+                  darkMode 
+                    ? "bg-gray-800 border border-gray-700" 
+                    : "bg-white border border-gray-200"
+                }`}>
                   <div className="flex items-center gap-2 mb-4">
                     <HiSparkles className="text-purple-600 text-2xl" />
-                    <h2 className="text-xl font-bold text-gray-900">AI-Powered Research</h2>
-                    <span className="bg-purple-100 text-purple-700 text-xs font-semibold px-2 py-1 rounded-full">
+                    <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
+                      AI-Powered Research
+                    </h2>
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                      darkMode 
+                        ? "bg-purple-900/30 text-purple-400" 
+                        : "bg-purple-100 text-purple-700"
+                    }`}>
                       Gemini 2.0 Flash
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-6">
+                  <p className={`text-sm mb-6 ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
                     Use AI to discover new casino offers, analyze offer quality, and generate strategic recommendations. 
                     Powered by Google Gemini with automatic retry logic for reliability.
                   </p>
@@ -288,8 +353,14 @@ export default function Home() {
                   {aiEnabled ? (
                     <div className="space-y-6">
                       {/* State Selector */}
-                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-purple-200 rounded-lg p-4">
-                        <label className="text-sm font-semibold text-gray-900 mb-3 block">
+                      <div className={`rounded-lg p-4 ${
+                        darkMode
+                          ? "bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-purple-700"
+                          : "bg-gradient-to-r from-blue-50 to-purple-50 border border-purple-200"
+                      }`}>
+                        <label className={`text-sm font-semibold mb-3 block ${
+                          darkMode ? "text-gray-200" : "text-gray-900"
+                        }`}>
                           📍 Select State for AI Research:
                         </label>
                         <div className="flex gap-2 flex-wrap">
@@ -300,7 +371,9 @@ export default function Home() {
                               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                                 selectedState === state
                                   ? "bg-purple-600 text-white"
-                                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+                                  : darkMode
+                                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600 border border-gray-600"
+                                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
                               }`}
                             >
                               {state}
@@ -314,6 +387,7 @@ export default function Home() {
                         <AIResearchPanel
                           state={selectedState}
                           missingCasinos={missingCasinosByState[selectedState] || []}
+                          darkMode={darkMode}
                         />
                       )}
 
@@ -325,6 +399,7 @@ export default function Home() {
                           stateCount: states.length,
                           casinoCount: Object.keys(coverageStats.casinoDistribution).length,
                         }}
+                        darkMode={darkMode}
                       />
                     </div>
                   ) : (
@@ -362,7 +437,11 @@ export default function Home() {
             )}
 
             {/* Results Table */}
-            <CasinoDataTable activeStates={activeStates} />
+            <CasinoDataTable 
+              key={refreshKey} 
+              activeStates={activeStates}
+              darkMode={darkMode}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -373,6 +452,10 @@ export default function Home() {
         onClose={() => setIsSettingsOpen(false)}
         scheduleRun={scheduleRun}
         onScheduleRunChange={setScheduleRun}
+        darkMode={darkMode}
+        onDarkModeChange={setDarkMode}
+        autoRefresh={autoRefresh}
+        onAutoRefreshChange={setAutoRefresh}
         activeStates={activeStates}
         onStateChange={handleStateChange}
       />

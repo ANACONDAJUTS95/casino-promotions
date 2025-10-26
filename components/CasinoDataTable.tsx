@@ -15,7 +15,8 @@ import {
   type SortOption,
 } from "@/lib/utils/offer-prioritization";
 import { AIOfferAnalyzer } from "@/components/ai/AIOfferAnalyzer";
-import { isGeminiConfigured } from "@/lib/ai/gemini-service";
+import { isGeminiConfigured, type OfferAnalysis } from "@/lib/ai/gemini-service";
+import { IoIosInformationCircle } from "react-icons/io";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -26,13 +27,15 @@ interface CasinoDataTableProps {
     pennsylvania: boolean;
     westVirginia: boolean;
   };
+  darkMode?: boolean;
 }
 
-export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
+export function CasinoDataTable({ activeStates, darkMode = false }: CasinoDataTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState<SortOption>("priority");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [aiEnabled] = useState(isGeminiConfigured());
+  const [analysisCache, setAnalysisCache] = useState<Record<string, OfferAnalysis>>({});
 
   // Filter offers based on active states
   const filteredOffers = casinoOffers.filter((offer) => {
@@ -79,6 +82,13 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
     setExpandedRow(expandedRow === offerId ? null : offerId);
   };
 
+  const handleAnalysisComplete = (offerId: string, analysis: OfferAnalysis) => {
+    setAnalysisCache((prev) => ({
+      ...prev,
+      [offerId]: analysis,
+    }));
+  };
+
   // Generate page numbers to display
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
@@ -120,14 +130,20 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
     <div className="space-y-4">
       {/* Sort Controls */}
       <motion.div
-        className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-3"
+        className={`flex items-center justify-between rounded-lg shadow-sm px-6 py-3 ${
+          darkMode 
+            ? "bg-gray-800 border border-gray-700" 
+            : "bg-white border border-gray-200"
+        }`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.6 }}
       >
         <div className="flex items-center gap-2">
-          <FaSort className="text-gray-600" />
-          <span className="text-sm font-medium text-gray-700">Sort by:</span>
+          <FaSort className={darkMode ? "text-gray-400" : "text-gray-600"} />
+          <span className={`text-sm font-medium ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+            Sort by:
+          </span>
         </div>
         <div className="flex gap-2">
           {[
@@ -139,10 +155,14 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
             <button
               key={option.value}
               onClick={() => setSortBy(option.value)}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                 sortBy === option.value
-                  ? "bg-black text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  ? darkMode 
+                    ? "bg-blue-600 text-white" 
+                    : "bg-black text-white"
+                  : darkMode
+                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               {option.label}
@@ -153,32 +173,54 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
 
       {/* Table */}
       <motion.div
-        className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+        className={`rounded-lg shadow-sm overflow-hidden ${
+          darkMode 
+            ? "bg-gray-800 border border-gray-700" 
+            : "bg-white border border-gray-200"
+        }`}
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.8 }}
       >
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className={darkMode ? "bg-gray-750 border-b border-gray-700" : "bg-gray-50 border-b border-gray-200"}>
               <tr>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700 w-[100px]">
-                  Priority
+                <th className={`text-left py-4 px-6 text-sm font-semibold w-[100px] ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}>
+                  <div className="flex items-center gap-2">
+                    Priority
+                    <IoIosInformationCircle className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`} />
+                  </div>
                 </th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
+                <th className={`text-left py-4 px-6 text-sm font-semibold ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}>
                   State
                 </th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
+                <th className={`text-left py-4 px-6 text-sm font-semibold ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}>
                   Casino
                 </th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
+                <th className={`text-left py-4 px-6 text-sm font-semibold ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}>
                   Offer
                 </th>
-                <th className="text-center py-4 px-6 text-sm font-semibold text-gray-700">
+                <th className={`text-center py-4 px-6 text-sm font-semibold ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}>
                   Bonus
                 </th>
-                <th className="text-center py-4 px-6 text-sm font-semibold text-gray-700">
-                  Value
+                <th className={`flex justify-center py-4 px-6 text-sm font-semibold ${
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                }`}>
+                  <div className="flex items-center gap-2">
+                    Value
+                    <IoIosInformationCircle className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`} />
+                  </div>
                 </th>
               </tr>
             </thead>
@@ -191,7 +233,11 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
                 return (
                   <React.Fragment key={offer.id}>
                     <motion.tr
-                      className="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className={`transition-colors cursor-pointer ${
+                        darkMode 
+                          ? "border-b border-gray-700 hover:bg-gray-750" 
+                          : "border-b border-gray-200 hover:bg-gray-50"
+                      }`}
                       onClick={() => toggleRowExpansion(offer.id)}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -202,24 +248,28 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
                     >
                       <td className="py-4 px-6 text-sm">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold text-gray-900">
+                          <span className={`text-lg font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
                             {offer.priorityScore}
                           </span>
                           <span className="text-xs">{badge.icon}</span>
                         </div>
                       </td>
                       <td className="py-4 px-6 text-sm">
-                        <span className="font-medium text-gray-900">
+                        <span className={`font-medium ${darkMode ? "text-gray-200" : "text-gray-900"}`}>
                           {offer.state.Abbreviation}
                         </span>
                       </td>
                       <td className="py-4 px-6 text-sm">
                         <div>
-                          <div className="font-medium text-gray-900">{offer.Name}</div>
-                          <div className="text-xs text-gray-500">{offer.offer_type}</div>
+                          <div className={`font-medium ${darkMode ? "text-gray-200" : "text-gray-900"}`}>
+                            {offer.Name}
+                          </div>
+                          <div className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                            {offer.offer_type}
+                          </div>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-700">
+                      <td className={`py-4 px-6 text-sm ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
                         <div className="max-w-md">
                           {offer.Offer_Name.length > 80
                             ? offer.Offer_Name.substring(0, 80) + "..."
@@ -227,22 +277,21 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
                         </div>
                       </td>
                       <td className="py-4 px-6 text-sm text-center">
-                        <div className="font-bold text-gray-900">
+                        <div className={`font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
                           ${offer.Expected_Bonus.toLocaleString()}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                           on ${offer.Expected_Deposit.toLocaleString()}
                         </div>
                       </td>
                       <td className="py-4 px-6 text-sm text-center">
                         <div
-                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full border ${
-                            offer.valueRatio >= 2
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full border ${offer.valueRatio >= 2
                               ? "bg-green-50 border-green-200 text-green-700"
                               : offer.valueRatio >= 1
-                              ? "bg-blue-50 border-blue-200 text-blue-700"
-                              : "bg-gray-50 border-gray-200 text-gray-700"
-                          }`}
+                                ? "bg-blue-50 border-blue-200 text-blue-700"
+                                : "bg-gray-50 border-gray-200 text-gray-700"
+                            }`}
                         >
                           {offer.valueRatio >= 2 && <HiSparkles className="text-xs" />}
                           <span className="font-semibold">
@@ -259,27 +308,41 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <td colSpan={6} className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                        <td colSpan={6} className={`px-6 py-4 ${
+                          darkMode 
+                            ? "bg-gray-750 border-b border-gray-700" 
+                            : "bg-gray-50 border-b border-gray-200"
+                        }`}>
                           <div className="space-y-3">
                             {/* Full Offer Name */}
                             <div>
-                              <div className="text-xs font-semibold text-gray-500 mb-1">
+                              <div className={`text-xs font-semibold mb-1 ${
+                                darkMode ? "text-gray-400" : "text-gray-500"
+                              }`}>
                                 FULL OFFER
                               </div>
-                              <div className="text-sm text-gray-900">{offer.Offer_Name}</div>
+                              <div className={`text-sm ${darkMode ? "text-gray-200" : "text-gray-900"}`}>
+                                {offer.Offer_Name}
+                              </div>
                             </div>
 
                             {/* Insights */}
                             {offer.insights.length > 0 && (
                               <div>
-                                <div className="text-xs font-semibold text-gray-500 mb-2">
+                                <div className={`text-xs font-semibold mb-2 ${
+                                  darkMode ? "text-gray-400" : "text-gray-500"
+                                }`}>
                                   AI INSIGHTS
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                   {offer.insights.map((insight, i) => (
                                     <span
                                       key={i}
-                                      className="text-xs bg-white border border-gray-200 rounded-full px-3 py-1 text-gray-700"
+                                      className={`text-xs rounded-full px-3 py-1 ${
+                                        darkMode 
+                                          ? "bg-gray-700 border border-gray-600 text-gray-300" 
+                                          : "bg-white border border-gray-200 text-gray-700"
+                                      }`}
                                     >
                                       {insight}
                                     </span>
@@ -290,31 +353,57 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
 
                             {/* Score Breakdown */}
                             <div>
-                              <div className="text-xs font-semibold text-gray-500 mb-2">
+                              <div className={`text-xs font-semibold mb-2 ${
+                                darkMode ? "text-gray-400" : "text-gray-500"
+                              }`}>
                                 SCORE BREAKDOWN
                               </div>
                               <div className="grid grid-cols-4 gap-3">
-                                <div className="bg-white border border-gray-200 rounded-lg p-2">
-                                  <div className="text-xs text-gray-500">Value Ratio</div>
-                                  <div className="text-lg font-bold text-gray-900">
+                                <div className={`rounded-lg p-2 ${
+                                  darkMode 
+                                    ? "bg-gray-700 border border-gray-600" 
+                                    : "bg-white border border-gray-200"
+                                }`}>
+                                  <div className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                    Value Ratio
+                                  </div>
+                                  <div className={`text-lg font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
                                     {offer.scoreBreakdown.valueRatioScore}
                                   </div>
                                 </div>
-                                <div className="bg-white border border-gray-200 rounded-lg p-2">
-                                  <div className="text-xs text-gray-500">Bonus Amount</div>
-                                  <div className="text-lg font-bold text-gray-900">
+                                <div className={`rounded-lg p-2 ${
+                                  darkMode 
+                                    ? "bg-gray-700 border border-gray-600" 
+                                    : "bg-white border border-gray-200"
+                                }`}>
+                                  <div className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                    Bonus Amount
+                                  </div>
+                                  <div className={`text-lg font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
                                     {offer.scoreBreakdown.bonusAmountScore}
                                   </div>
                                 </div>
-                                <div className="bg-white border border-gray-200 rounded-lg p-2">
-                                  <div className="text-xs text-gray-500">Offer Type</div>
-                                  <div className="text-lg font-bold text-gray-900">
+                                <div className={`rounded-lg p-2 ${
+                                  darkMode 
+                                    ? "bg-gray-700 border border-gray-600" 
+                                    : "bg-white border border-gray-200"
+                                }`}>
+                                  <div className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                    Offer Type
+                                  </div>
+                                  <div className={`text-lg font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
                                     {offer.scoreBreakdown.offerTypeScore}
                                   </div>
                                 </div>
-                                <div className="bg-white border border-gray-200 rounded-lg p-2">
-                                  <div className="text-xs text-gray-500">Accessibility</div>
-                                  <div className="text-lg font-bold text-gray-900">
+                                <div className={`rounded-lg p-2 ${
+                                  darkMode 
+                                    ? "bg-gray-700 border border-gray-600" 
+                                    : "bg-white border border-gray-200"
+                                }`}>
+                                  <div className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                                    Accessibility
+                                  </div>
+                                  <div className={`text-lg font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>
                                     {offer.scoreBreakdown.accessibilityScore}
                                   </div>
                                 </div>
@@ -329,6 +418,10 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
                                   casino={offer.Name}
                                   deposit={offer.Expected_Deposit}
                                   bonus={offer.Expected_Bonus}
+                                  darkMode={darkMode}
+                                  offerId={offer.id}
+                                  cachedAnalysis={analysisCache[offer.id]}
+                                  onAnalysisComplete={handleAnalysisComplete}
                                 />
                               </div>
                             )}
@@ -351,7 +444,7 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.5 }}
       >
-        <div className="text-sm text-gray-600">
+        <div className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
           Showing {startIndex + 1} to {Math.min(endIndex, sortedOffers.length)}{" "}
           of {sortedOffers.length} results
         </div>
@@ -363,8 +456,12 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
             disabled={currentPage === 1}
             className={`flex items-center justify-center w-10 h-10 rounded-md border transition-colors ${
               currentPage === 1
-                ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                ? darkMode
+                  ? "border-gray-700 text-gray-600 cursor-not-allowed"
+                  : "border-gray-200 text-gray-400 cursor-not-allowed"
+                : darkMode
+                  ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
             }`}
           >
             <FaChevronLeft className="text-sm" />
@@ -376,7 +473,9 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
               return (
                 <span
                   key={`ellipsis-${index}`}
-                  className="flex items-center justify-center w-10 h-10 text-gray-500"
+                  className={`flex items-center justify-center w-10 h-10 ${
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
                 >
                   ...
                 </span>
@@ -389,8 +488,12 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
                 onClick={() => goToPage(page as number)}
                 className={`flex items-center justify-center w-10 h-10 rounded-md border transition-colors ${
                   currentPage === page
-                    ? "bg-black text-white border-black"
-                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    ? darkMode
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-black text-white border-black"
+                    : darkMode
+                      ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 {page}
@@ -404,8 +507,12 @@ export function CasinoDataTable({ activeStates }: CasinoDataTableProps) {
             disabled={currentPage === totalPages}
             className={`flex items-center justify-center w-10 h-10 rounded-md border transition-colors ${
               currentPage === totalPages
-                ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                ? darkMode
+                  ? "border-gray-700 text-gray-600 cursor-not-allowed"
+                  : "border-gray-200 text-gray-400 cursor-not-allowed"
+                : darkMode
+                  ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
             }`}
           >
             <FaChevronRight className="text-sm" />

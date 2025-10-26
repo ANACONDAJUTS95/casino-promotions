@@ -1,8 +1,99 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Background colors */
+  --color-page-bg: 243 244 246; /* gray-100 */
+  --color-card-bg: 255 255 255; /* white */
+  --color-card-secondary: 249 250 251; /* gray-50 */
+  --color-card-tertiary: 243 244 246; /* gray-100 */
+  
+  /* Text colors */
+  --color-text-primary: 0 0 0; /* black */
+  --color-text-secondary: 17 24 39; /* gray-900 */
+  --color-text-tertiary: 55 65 81; /* gray-700 */
+  --color-text-muted: 107 114 128; /* gray-500 */
+  --color-text-subtle: 156 163 175; /* gray-400 */
+  
+  /* Border colors */
+  --color-border: 229 231 235; /* gray-200 */
+  --color-border-secondary: 209 213 219; /* gray-300 */
+  
+  /* Interactive states */
+  --color-hover-bg: 249 250 251; /* gray-50 */
+  --color-active-bg: 243 244 246; /* gray-100 */
+  
+  /* Status colors - adjusted for light theme */
+  --color-red-bg: 254 242 242; /* red-50 */
+  --color-red-border: 254 202 202; /* red-200 */
+  --color-red-text: 185 28 28; /* red-700 */
+  
+  --color-yellow-bg: 254 252 232; /* yellow-50 */
+  --color-yellow-border: 254 240 138; /* yellow-200 */
+  --color-yellow-text: 161 98 7; /* yellow-700 */
+  
+  --color-green-bg: 240 253 244; /* green-50 */
+  --color-green-border: 187 247 208; /* green-200 */
+  --color-green-text: 21 128 61; /* green-700 */
+  
+  --color-blue-bg: 239 246 255; /* blue-50 */
+  --color-blue-border: 191 219 254; /* blue-200 */
+  --color-blue-text: 29 78 216; /* blue-700 */
+  
+  --color-purple-bg: 250 245 255; /* purple-50 */
+  --color-purple-border: 233 213 255; /* purple-200 */
+  --color-purple-text: 126 34 206; /* purple-700 */
+  
+  --color-orange-bg: 255 247 237; /* orange-50 */
+  --color-orange-border: 254 215 170; /* orange-200 */
+  --color-orange-text: 194 65 12; /* orange-700 */
+}
+
+[data-theme="dark"] {
+  /* Background colors - True blacks and neutral grays */
+  --color-page-bg: 10 10 10; /* Very dark gray (almost black) */
+  --color-card-bg: 26 26 26; /* Dark neutral gray */
+  --color-card-secondary: 42 42 42; /* Medium-dark neutral gray */
+  --color-card-tertiary: 58 58 58; /* Lighter neutral gray */
+  
+  /* Text colors */
+  --color-text-primary: 255 255 255; /* Pure white */
+  --color-text-secondary: 229 229 229; /* Light neutral gray */
+  --color-text-tertiary: 212 212 212; /* Neutral gray */
+  --color-text-muted: 163 163 163; /* Medium neutral gray */
+  --color-text-subtle: 115 115 115; /* Darker neutral gray */
+  
+  /* Border colors */
+  --color-border: 58 58 58; /* Neutral gray border */
+  --color-border-secondary: 82 82 82; /* Lighter neutral gray border */
+  
+  /* Interactive states */
+  --color-hover-bg: 42 42 42; /* Hover: Medium-dark gray */
+  --color-active-bg: 58 58 58; /* Active: Lighter gray */
+  
+  /* Status colors - adjusted for dark theme with opacity */
+  --color-red-bg: 127 29 29 / 0.3; /* red-900/30 */
+  --color-red-border: 153 27 27; /* red-800 */
+  --color-red-text: 248 113 113; /* red-400 */
+  
+  --color-yellow-bg: 133 77 14 / 0.3; /* yellow-900/30 */
+  --color-yellow-border: 161 98 7; /* yellow-800 */
+  --color-yellow-text: 250 204 21; /* yellow-400 */
+  
+  --color-green-bg: 20 83 45 / 0.3; /* green-900/30 */
+  --color-green-border: 22 101 52; /* green-800 */
+  --color-green-text: 74 222 128; /* green-400 */
+  
+  --color-blue-bg: 30 58 138 / 0.2; /* blue-900/20 */
+  --color-blue-border: 30 64 175; /* blue-800 */
+  --color-blue-text: 147 197 253; /* blue-300 */
+  
+  --color-purple-bg: 88 28 135 / 0.1; /* purple-900/10 */
+  --color-purple-border: 107 33 168; /* purple-800 */
+  --color-purple-text: 192 132 252; /* purple-400 */
+  
+  --color-orange-bg: 124 45 18 / 0.3; /* orange-900/30 */
+  --color-orange-border: 154 52 18; /* orange-800 */
+  --color-orange-text: 251 146 60; /* orange-400 */
 }
 
 @theme inline {
@@ -10,17 +101,93 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  
+  /* Custom theme colors */
+  --color-theme-page-bg: rgb(var(--color-page-bg));
+  --color-theme-card-bg: rgb(var(--color-card-bg));
+  --color-theme-card-secondary: rgb(var(--color-card-secondary));
+  --color-theme-card-tertiary: rgb(var(--color-card-tertiary));
+  
+  --color-theme-text-primary: rgb(var(--color-text-primary));
+  --color-theme-text-secondary: rgb(var(--color-text-secondary));
+  --color-theme-text-tertiary: rgb(var(--color-text-tertiary));
+  --color-theme-text-muted: rgb(var(--color-text-muted));
+  --color-theme-text-subtle: rgb(var(--color-text-subtle));
+  
+  --color-theme-border: rgb(var(--color-border));
+  --color-theme-border-secondary: rgb(var(--color-border-secondary));
+  
+  --color-theme-hover-bg: rgb(var(--color-hover-bg));
+  --color-theme-active-bg: rgb(var(--color-active-bg));
+  
+  --color-theme-red-bg: rgb(var(--color-red-bg));
+  --color-theme-red-border: rgb(var(--color-red-border));
+  --color-theme-red-text: rgb(var(--color-red-text));
+  
+  --color-theme-yellow-bg: rgb(var(--color-yellow-bg));
+  --color-theme-yellow-border: rgb(var(--color-yellow-border));
+  --color-theme-yellow-text: rgb(var(--color-yellow-text));
+  
+  --color-theme-green-bg: rgb(var(--color-green-bg));
+  --color-theme-green-border: rgb(var(--color-green-border));
+  --color-theme-green-text: rgb(var(--color-green-text));
+  
+  --color-theme-blue-bg: rgb(var(--color-blue-bg));
+  --color-theme-blue-border: rgb(var(--color-blue-border));
+  --color-theme-blue-text: rgb(var(--color-blue-text));
+  
+  --color-theme-purple-bg: rgb(var(--color-purple-bg));
+  --color-theme-purple-border: rgb(var(--color-purple-border));
+  --color-theme-purple-text: rgb(var(--color-purple-text));
+  
+  --color-theme-orange-bg: rgb(var(--color-orange-bg));
+  --color-theme-orange-border: rgb(var(--color-orange-border));
+  --color-theme-orange-text: rgb(var(--color-orange-text));
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Theme-aware utility classes */
+.bg-theme-page { background-color: var(--color-theme-page-bg); }
+.bg-theme-card { background-color: var(--color-theme-card-bg); }
+.bg-theme-card-secondary { background-color: var(--color-theme-card-secondary); }
+.bg-theme-card-tertiary { background-color: var(--color-theme-card-tertiary); }
+
+.text-theme-primary { color: var(--color-theme-text-primary); }
+.text-theme-secondary { color: var(--color-theme-text-secondary); }
+.text-theme-tertiary { color: var(--color-theme-text-tertiary); }
+.text-theme-muted { color: var(--color-theme-text-muted); }
+.text-theme-subtle { color: var(--color-theme-text-subtle); }
+
+.border-theme { border-color: var(--color-theme-border); }
+.border-theme-secondary { border-color: var(--color-theme-border-secondary); }
+
+.hover\:bg-theme-hover:hover { background-color: var(--color-theme-hover-bg); }
+.hover\:bg-theme-active:hover { background-color: var(--color-theme-active-bg); }
+
+/* Status-specific theme colors */
+.bg-theme-red { background-color: var(--color-theme-red-bg); }
+.border-theme-red { border-color: var(--color-theme-red-border); }
+.text-theme-red { color: var(--color-theme-red-text); }
+
+.bg-theme-yellow { background-color: var(--color-theme-yellow-bg); }
+.border-theme-yellow { border-color: var(--color-theme-yellow-border); }
+.text-theme-yellow { color: var(--color-theme-yellow-text); }
+
+.bg-theme-green { background-color: var(--color-theme-green-bg); }
+.border-theme-green { border-color: var(--color-theme-green-border); }
+.text-theme-green { color: var(--color-theme-green-text); }
+
+.bg-theme-blue { background-color: var(--color-theme-blue-bg); }
+.border-theme-blue { border-color: var(--color-theme-blue-border); }
+.text-theme-blue { color: var(--color-theme-blue-text); }
+
+.bg-theme-purple { background-color: var(--color-theme-purple-bg); }
+.border-theme-purple { border-color: var(--color-theme-purple-border); }
+.text-theme-purple { color: var(--color-theme-purple-text); }
+
+.bg-theme-orange { background-color: var(--color-theme-orange-bg); }
+.border-theme-orange { border-color: var(--color-theme-orange-border); }
+.text-theme-orange { color: var(--color-theme-orange-text); }
