@@ -75,6 +75,30 @@ export interface CoverageRecommendation {
   estimatedEffort: string;
 }
 
+export interface LicensedCasino {
+  name: string;
+  operator: string;
+  licenseNumber?: string;
+  status: "operational" | "licensed" | "pending";
+  source: string;
+  confidence: "high" | "medium" | "low";
+  notes: string;
+}
+
+export interface ResearchedOffer {
+  casino: string;
+  offerName: string;
+  offerType: string;
+  deposit: number;
+  bonus: number;
+  valueRatio: number;
+  restrictions: string[];
+  source: string;
+  confidence: "high" | "medium" | "low";
+  isBetterThanExisting: boolean;
+  comparisonNotes: string;
+}
+
 /**
  * Discover new casino offers using AI web research
  */
@@ -295,6 +319,177 @@ Return ONLY valid JSON array (no markdown):
     
     throw new Error(
       error instanceof Error ? error.message : "Failed to generate recommendations"
+    );
+  }
+}
+
+/**
+ * Discover all licensed/operational casinos in a specific state
+ * Prioritizes official regulatory sources
+ */
+export async function discoverLicensedCasinos(
+  state: string
+): Promise<LicensedCasino[]> {
+  try {
+    const genAI = getGeminiClient();
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+
+    const stateInfo: Record<string, string> = {
+      "NJ": "New Jersey Division of Gaming Enforcement (NJDGE)",
+      "MI": "Michigan Gaming Control Board (MGCB)",
+      "PA": "Pennsylvania Gaming Control Board (PGCB)",
+      "WV": "West Virginia Lottery Commission"
+    };
+
+    const prompt = `You are a casino licensing research specialist. Research ALL licensed and operational ONLINE CASINOS in ${state}.
+
+PRIMARY SOURCES TO PRIORITIZE:
+- ${stateInfo[state] || "State Gaming Commission"}
+- Official state gaming regulatory databases
+- Licensed operator lists from state government websites
+
+Task: Find ALL currently licensed and operational online casinos in ${state}. Focus on iGaming/online casino operators, NOT sports betting only.
+
+Include major operators like: BetMGM, DraftKings Casino, FanDuel Casino, Caesars, BetRivers, Borgata, Golden Nugget, etc.
+
+Return ONLY valid JSON array (no markdown):
+[
+  {
+    "name": "Full casino brand name",
+    "operator": "Parent company/operator name",
+    "licenseNumber": "License # if available",
+    "status": "operational" or "licensed" or "pending",
+    "source": "Regulatory source or official website",
+    "confidence": "high" or "medium" or "low",
+    "notes": "Any important details about the license or operation"
+  }
+]
+
+Be thorough and accurate. Only include casinos with actual online casino gaming, not sports-only operators.`;
+
+    const result = await retryWithBackoff(async () => {
+      return await model.generateContent(prompt);
+    }, 3, 2000);
+
+    const response = result.response.text();
+    let cleanedResponse = response.trim();
+    if (cleanedResponse.startsWith("```json")) {
+      cleanedResponse = cleanedResponse.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+    } else if (cleanedResponse.startsWith("```")) {
+      cleanedResponse = cleanedResponse.replace(/```\n?/g, "");
+    }
+
+    const casinos = JSON.parse(cleanedResponse);
+    return casinos;
+  } catch (error) {
+    console.error("Error discovering licensed casinos:", error);
+    
+    if (error instanceof Error) {
+      if (error.message.includes("503") || error.message.includes("overloaded")) {
+        throw new Error("AI service is temporarily busy. Please try again in a few seconds.");
+      }
+    }
+    
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to discover licensed casinos"
+    );
+  }
+}
+
+/**
+ * Research current casino promotional offers for a specific casino
+ * Compares with existing offer if provided
+ */
+export async function researchCasinoOffers(
+  casinoName: string,
+  state: string,
+  existingOffer?: {
+    name: string;
+    deposit: number;
+    bonus: number;
+    type: string;
+  }
+): Promise<ResearchedOffer[]> {
+  try {
+    const genAI = getGeminiClient();
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+
+    const existingContext = existingOffer 
+      ? `\n\nCURRENT OFFER IN SYSTEM:
+Name: "${existingOffer.name}"
+Type: ${existingOffer.type}
+Deposit: $${existingOffer.deposit}
+Bonus: $${existingOffer.bonus}
+Value Ratio: ${((existingOffer.bonus / existingOffer.deposit) * 100).toFixed(0)}%
+
+COMPARISON TASK: Find if there are BETTER or DIFFERENT current offers. Better typically means:
+- Larger bonus amount
+- Higher value ratio (bonus/deposit)
+- More favorable terms
+- Different offer types we might be missing`
+      : "\n\nTASK: Find ALL current casino promotional offers.";
+
+    const prompt = `You are a casino promotions researcher. Research CURRENT casino promotional offers for ${casinoName} in ${state}.
+${existingContext}
+
+Focus on:
+- Welcome bonuses / First deposit bonuses
+- No deposit bonuses
+- Deposit match bonuses
+- Cashback / Lossback offers
+- CASINO offers specifically (not sports betting)
+
+Search their official website, recent promotional pages, and reliable casino review sites.
+
+Return ONLY valid JSON array (no markdown):
+[
+  {
+    "casino": "${casinoName}",
+    "offerName": "Full offer description",
+    "offerType": "Deposit (Cashable)" or "Lossback" or "No Deposit",
+    "deposit": 0,
+    "bonus": 0,
+    "valueRatio": 0,
+    "restrictions": ["Key restrictions like wagering requirements, time limits, game restrictions"],
+    "source": "Where you found this offer",
+    "confidence": "high" or "medium" or "low",
+    "isBetterThanExisting": ${existingOffer ? 'true or false' : 'false'},
+    "comparisonNotes": "${existingOffer ? 'Explain why this is better/different or not' : 'N/A'}"
+  }
+]
+
+Important:
+- Find 1-3 current offers
+- Be accurate with numbers (deposit and bonus amounts)
+- Calculate valueRatio as (bonus/deposit * 100)
+- If comparing, mark as "better" if it has larger bonus OR better value ratio OR more favorable terms
+- Use realistic, current data`;
+
+    const result = await retryWithBackoff(async () => {
+      return await model.generateContent(prompt);
+    }, 3, 2000);
+
+    const response = result.response.text();
+    let cleanedResponse = response.trim();
+    if (cleanedResponse.startsWith("```json")) {
+      cleanedResponse = cleanedResponse.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+    } else if (cleanedResponse.startsWith("```")) {
+      cleanedResponse = cleanedResponse.replace(/```\n?/g, "");
+    }
+
+    const offers = JSON.parse(cleanedResponse);
+    return offers;
+  } catch (error) {
+    console.error("Error researching casino offers:", error);
+    
+    if (error instanceof Error) {
+      if (error.message.includes("503") || error.message.includes("overloaded")) {
+        throw new Error("AI service is temporarily busy. Please try again in a moment.");
+      }
+    }
+    
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to research casino offers"
     );
   }
 }

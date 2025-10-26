@@ -10,6 +10,7 @@ import { SettingsModal } from "@/components/modals/SettingsModal";
 import { InsightsDashboard } from "@/components/InsightsDashboard";
 import { AIResearchPanel } from "@/components/ai/AIResearchPanel";
 import { AIRecommendationsPanel } from "@/components/ai/AIRecommendationsPanel";
+import { ComprehensiveResearchPanel } from "@/components/ai/ComprehensiveResearchPanel";
 import { analyzeCoverage, findCrossCoverageGaps } from "@/lib/utils/gap-analysis";
 import { casinoOffers } from "@/lib/data/casino-offers";
 import { isGeminiConfigured } from "@/lib/ai/gemini-service";
@@ -381,6 +382,9 @@ export default function Home() {
                           ))}
                         </div>
                       </div>
+
+                      {/* Comprehensive Market Research */}
+                      <ComprehensiveResearchPanel darkMode={darkMode} />
 
                       {/* AI Research Panel */}
                       {selectedState && (
