@@ -82,7 +82,7 @@ export function SettingsModal({
                   </Dialog.Title>
                   <button
                     onClick={onClose}
-                    className={`transition-colors ${
+                    className={`transition-colors cursor-pointer ${
                       darkMode 
                         ? "text-gray-400 hover:text-gray-300" 
                         : "text-gray-400 hover:text-gray-600"
@@ -114,7 +114,7 @@ export function SettingsModal({
                         onChange={onDarkModeChange}
                         className={`${
                           darkMode ? "bg-blue-600" : "bg-gray-300"
-                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
                           darkMode ? "hover:bg-blue-700" : "hover:bg-gray-400"
                         }`}
                       >
@@ -141,7 +141,7 @@ export function SettingsModal({
                         onChange={onAutoRefreshChange}
                         className={`${
                           autoRefresh ? (darkMode ? "bg-blue-600" : "bg-black") : "bg-gray-300"
-                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
                           autoRefresh 
                             ? (darkMode ? "hover:bg-blue-700" : "hover:bg-gray-800") 
                             : "hover:bg-gray-400"
@@ -172,7 +172,7 @@ export function SettingsModal({
                         onChange={onScheduleRunChange}
                         className={`${
                           scheduleRun ? (darkMode ? "bg-blue-600" : "bg-black") : "bg-gray-300"
-                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
                           scheduleRun 
                             ? (darkMode ? "hover:bg-blue-700" : "hover:bg-gray-800") 
                             : "hover:bg-gray-400"
@@ -216,7 +216,7 @@ export function SettingsModal({
                             activeStates.newJersey 
                               ? (darkMode ? "bg-blue-600" : "bg-black") 
                               : "bg-gray-300"
-                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
                             activeStates.newJersey 
                               ? (darkMode ? "hover:bg-blue-700" : "hover:bg-gray-800") 
                               : "hover:bg-gray-400"
@@ -242,7 +242,7 @@ export function SettingsModal({
                             activeStates.michigan 
                               ? (darkMode ? "bg-blue-600" : "bg-black") 
                               : "bg-gray-300"
-                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
                             activeStates.michigan 
                               ? (darkMode ? "hover:bg-blue-700" : "hover:bg-gray-800") 
                               : "hover:bg-gray-400"
@@ -268,7 +268,7 @@ export function SettingsModal({
                             activeStates.pennsylvania 
                               ? (darkMode ? "bg-blue-600" : "bg-black") 
                               : "bg-gray-300"
-                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
                             activeStates.pennsylvania 
                               ? (darkMode ? "hover:bg-blue-700" : "hover:bg-gray-800") 
                               : "hover:bg-gray-400"
@@ -294,7 +294,7 @@ export function SettingsModal({
                             activeStates.westVirginia 
                               ? (darkMode ? "bg-blue-600" : "bg-black") 
                               : "bg-gray-300"
-                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${
                             activeStates.westVirginia 
                               ? (darkMode ? "hover:bg-blue-700" : "hover:bg-gray-800") 
                               : "hover:bg-gray-400"

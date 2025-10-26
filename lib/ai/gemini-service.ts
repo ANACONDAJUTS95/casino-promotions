@@ -166,21 +166,34 @@ export async function analyzeOfferQuality(
 
 Casino: ${casino}
 Offer: "${offerName}"
-Deposit: $${deposit} | Bonus: $${bonus}
+Deposit Required: $${deposit}
+Bonus Amount: $${bonus}
+Value Ratio: ${((bonus / deposit) * 100).toFixed(0)}%
 
-Analyze: wagering requirements (10-30x typical), time limits (7-30 days), game restrictions, cashout limits, actual value, red flags.
+Your Task:
+1. Estimate likely wagering requirements (10-30x is typical)
+2. Identify probable time limits (7-30 days common)
+3. Consider game restrictions, cashout limits
+4. Calculate realistic actual value
+5. Identify red flags or concerns
+6. Rate the offer 0-100 based on:
+   - 90-100: Exceptional value, minimal restrictions
+   - 75-89: Good value with reasonable terms
+   - 60-74: Average value with standard restrictions
+   - 40-59: Below average, restrictive terms
+   - 0-39: Poor value or very restrictive
 
-Return ONLY valid JSON (no markdown):
+Return ONLY valid JSON (no markdown, no code blocks):
 {
-  "overallRating": 75,
-  "hiddenRestrictions": ["List likely restrictions"],
-  "actualValue": "Value explanation",
-  "recommendation": "Overall recommendation",
-  "warnings": ["Concerns"],
-  "positives": ["Positive aspects"]
+  "overallRating": <number 0-100>,
+  "hiddenRestrictions": ["List 3-5 likely hidden restrictions or terms"],
+  "actualValue": "Explain the real-world value after restrictions",
+  "recommendation": "Clear recommendation: Worth it, Skip it, or Proceed with caution",
+  "warnings": ["List any red flags or concerns"],
+  "positives": ["List positive aspects of the offer"]
 }
 
-Be realistic and conservative. Rating 0-100.`;
+Be critical and realistic. Most offers have significant restrictions. Vary your ratings based on actual value.`;
 
     // Add retry logic
     const result = await retryWithBackoff(async () => {
